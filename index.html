@@ -2,161 +2,1003 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Web3 Wallet DApp</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.umd.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoJib Token Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: #6c5ce7;
+      --secondary: #a29bfe;
+      --accent: #fd79a8;
+      --dark: #2d3436;
+      --light: #f5f6fa;
+      --success: #00b894;
+      --warning: #fdcb6e;
+      --danger: #d63031;
+      --card-bg: rgba(255, 255, 255, 0.9);
+    }
+
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: var(--dark);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       color: white;
+      padding: 25px 30px;
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    h1, h2, h3 {
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 {
+      font-size: 1.4rem;
+      color: var(--primary);
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      color: var(--primary);
+    }
+
+    .tab-container {
+      display: flex;
+      border-bottom: 1px solid #eee;
+      padding: 0 30px;
+    }
+
+    .tab {
+      padding: 15px 25px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab.active {
+      color: var(--primary);
+      border-bottom: 3px solid var(--primary);
+    }
+
+    .tab:hover {
+      background: rgba(108, 92, 231, 0.1);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 30px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 50px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+      display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 2rem;
+      gap: 8px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    button.secondary {
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: rgba(108, 92, 231, 0.1);
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, var(--danger) 0%, #ff7675 100%);
+    }
+
+    button.warning {
+      background: linear-gradient(135deg, var(--warning) 0%, #ffeaa7 100%);
+      color: var(--dark);
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      margin-bottom: 15px;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(12px);
-      padding: 2rem;
-      border-radius: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
-      text-align: center;
-      max-width: 400px;
-      width: 100%;
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .btn {
-      background-color: #00b4d8;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      font-size: 1rem;
-      font-weight: bold;
-      color: white;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.3s;
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
-    .btn:hover {
-      background-color: #0077b6;
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
     }
 
-    .info {
-      margin-top: 1rem;
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #eee;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .info-label {
+      font-weight: 500;
+      color: #666;
+    }
+
+    .info-value {
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .mint-log {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 4px solid var(--primary);
+      transition: all 0.3s ease;
+    }
+
+    .mint-log:hover {
+      transform: translateX(5px);
+    }
+
+    .address {
+      font-family: monospace;
       font-size: 0.9rem;
-    }
-
-    .error {
-      color: #ff6b6b;
-      margin-top: 1rem;
-    }
-
-    .success {
-      color: #4afcb1;
-    }
-
-    .network-warning {
-      background: #ffc107;
-      padding: 0.5rem;
-      border-radius: 8px;
-      color: #333;
-      margin-top: 1rem;
-    }
-
-    .signature {
-      margin-top: 1rem;
-      font-size: 0.8rem;
       word-break: break-all;
-      color: #9be7ff;
+      color: #555;
+    }
+
+    .small {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(108, 92, 231, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    .status-connected {
+      color: var(--success);
+      font-weight: 500;
+    }
+
+    .status-disconnected {
+      color: var(--danger);
+      font-weight: 500;
+    }
+
+    .referral-link {
+      background: rgba(108, 92, 231, 0.1);
+      padding: 10px 15px;
+      border-radius: 10px;
+      word-break: break-all;
+      margin: 15px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .copy-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      align-self: flex-end;
+    }
+
+    .airdrop-addresses {
+      min-height: 100px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .stake-input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .stake-input-group input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .stake-rewards {
+      background: linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(0, 184, 148, 0.05) 100%);
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        border-radius: 10px;
+      }
+      
+      header {
+        padding: 20px;
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+      
+      .tab-container {
+        padding: 0 15px;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      
+      .tab {
+        padding: 12px 15px;
+      }
+      
+      .tab-content {
+        padding: 20px;
+      }
+      
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <h1>🚀 CryptoJib Token Dashboard</h1>
+      <div>
+        <button id="connectButton" onclick="connectWallet()">
+          <span id="connectButtonText">🔌 Connect Wallet</span>
+          <span id="connectSpinner" class="spinner hidden"></span>
+        </button>
+      </div>
+    </header>
 
-  <div class="card">
-    <h2>🔗 Connect to MetaMask</h2>
-    <button class="btn" onclick="connectWallet()">Connect Wallet</button>
-
-    <div id="networkWarning" class="network-warning" style="display:none;">
-      ⚠️ Please switch to Ethereum Mainnet
+    <div class="tab-container">
+      <div class="tab active" onclick="switchTab('dashboard')">Dashboard</div>
+      <div class="tab" onclick="switchTab('mint')">Mint Tokens</div>
+      <div class="tab" onclick="switchTab('airdrop')">Airdrop</div>
+      <div class="tab" onclick="switchTab('staking')">Staking</div>
+      <div class="tab" onclick="switchTab('history')">Mint History</div>
     </div>
 
-    <div id="walletInfo" class="info" style="display:none;">
-      <p><strong>Address:</strong> <span id="walletAddress"></span></p>
-      <p><strong>ETH Balance:</strong> <span id="walletBalance"></span></p>
-      <button class="btn" onclick="signMessage()">Sign In</button>
-      <div id="signature" class="signature"></div>
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-content active">
+      <div class="card-grid">
+        <div class="card">
+          <h3>Wallet Status</h3>
+          <div class="info-item">
+            <span class="info-label">Connection:</span>
+            <span id="status" class="status-disconnected">Not connected</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Address:</span>
+            <span id="wallet" class="info-value">-</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Token Info</h3>
+          <div class="info-item">
+            <span class="info-label">Your Balance:</span>
+            <span id="balance" class="info-value">0 CJIB</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Total Supply:</span>
+            <span id="supply" class="info-value">0 CJIB</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Minted Holders:</span>
+            <span id="holders" class="info-value">-</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Referral Program</h3>
+          <p>Share your referral link and earn rewards!</p>
+          <div id="referralContainer" class="referral-link hidden">
+            <span id="referralLink">Connect wallet to generate link</span>
+            <button class="copy-btn" onclick="copyReferralLink()">Copy</button>
+          </div>
+          <div id="referralInfo" class="hidden">
+            <div class="info-item">
+              <span class="info-label">Your Referrer:</span>
+              <span id="referrerAddress" class="info-value">None</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div id="errorMsg" class="error"></div>
+    <!-- Mint Tab -->
+    <div id="mint" class="tab-content">
+      <div class="card">
+        <h3>Mint Tokens (Owner only)</h3>
+        <p class="small">Mint new CJIB tokens to any address</p>
+        
+        <input id="mintTo" placeholder="Recipient address (0x...)">
+        <input id="mintAmount" placeholder="Amount (e.g., 100)" type="number">
+        
+        <button onclick="mint()" id="mintButton">
+          <span id="mintButtonText">🪙 Mint Tokens</span>
+          <span id="mintSpinner" class="spinner hidden"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Airdrop Tab -->
+    <div id="airdrop" class="tab-content">
+      <div class="card">
+        <h3>Batch Airdrop</h3>
+        <p class="small">Send tokens to multiple addresses at once (one address per line)</p>
+        
+        <textarea id="airdropAddresses" class="airdrop-addresses" placeholder="0x123...abc&#10;0x456...def&#10;0x789...ghi"></textarea>
+        <input id="airdropAmount" placeholder="Amount per address (e.g., 100)" type="number">
+        
+        <button onclick="airdrop()" id="airdropButton">
+          <span id="airdropButtonText">✈️ Execute Airdrop</span>
+          <span id="airdropSpinner" class="spinner hidden"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Staking Tab -->
+    <div id="staking" class="tab-content">
+      <div class="card">
+        <h3>Stake Your CJIB</h3>
+        <p class="small">Stake your tokens to earn rewards</p>
+        
+        <div class="info-item">
+          <span class="info-label">Staked Balance:</span>
+          <span id="stakedBalance" class="info-value">0 CJIB</span>
+        </div>
+        
+        <div class="stake-input-group">
+          <input id="stakeAmount" placeholder="Amount to stake" type="number">
+          <button onclick="stake()" id="stakeButton">
+            <span id="stakeButtonText">🔒 Stake</span>
+            <span id="stakeSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+        
+        <div class="stake-input-group">
+          <input id="unstakeAmount" placeholder="Amount to unstake" type="number">
+          <button onclick="unstake()" class="secondary" id="unstakeButton">
+            <span id="unstakeButtonText">🔓 Unstake</span>
+            <span id="unstakeSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+        
+        <div class="stake-rewards">
+          <h4>Estimated Rewards</h4>
+          <div class="info-item">
+            <span class="info-label">Daily:</span>
+            <span id="dailyRewards" class="info-value">0 CJIB</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Weekly:</span>
+            <span id="weeklyRewards" class="info-value">0 CJIB</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">APY:</span>
+            <span id="apy" class="info-value">15%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="history" class="tab-content">
+      <div class="card">
+        <h3>Mint History</h3>
+        <p class="small">Recent token minting transactions</p>
+        
+        <button onclick="exportToCSV()" class="secondary">📁 Export to CSV</button>
+        
+        <div id="mintHistory" style="margin-top: 20px;">
+          <p class="small">Loading transfer logs...</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    let provider, signer;
+    // Contract Configuration
+    const contractAddress = "0xC42c4d7d3E560AF2E02281870cC8D0685f891457";
+    const abi = [
+      "function balanceOf(address) view returns (uint256)",
+      "function mint(address to, uint256 amount)",
+      "function totalSupply() view returns (uint256)",
+      "function decimals() view returns (uint8)",
+      "function airdrop(address[] memory recipients, uint256 amount) external",
+      "function stake(uint256 amount) external",
+      "function unstake(uint256 amount) external",
+      "function getStakedBalance(address user) view returns (uint256)",
+      "event Transfer(address indexed from, address indexed to, uint256 value)",
+      "event Staked(address indexed user, uint256 amount)",
+      "event Unstaked(address indexed user, uint256 amount)"
+    ];
 
+    // Global Variables
+    let provider, signer, contract, walletAddress, decimals;
+    let referralCode = getUrlParameter('ref');
+
+    // Initialize on page load
+    window.addEventListener('load', async () => {
+      // Check for referral code in URL
+      if (referralCode && ethers.utils.isAddress(referralCode)) {
+        localStorage.setItem('referral', referralCode);
+      }
+      
+      // Check if MetaMask is installed
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          // Try to connect automatically if already connected
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            await connectWallet();
+          }
+        } catch (error) {
+          console.error("Auto-connect failed:", error);
+        }
+      }
+    });
+
+    // Connect Wallet Function
     async function connectWallet() {
-      const errorMsg = document.getElementById("errorMsg");
-      const walletInfo = document.getElementById("walletInfo");
-      const addressSpan = document.getElementById("walletAddress");
-      const balanceSpan = document.getElementById("walletBalance");
-      const networkWarning = document.getElementById("networkWarning");
-
-      errorMsg.textContent = "";
-      networkWarning.style.display = "none";
-      walletInfo.style.display = "none";
-
       try {
-        if (!window.ethereum) {
-          errorMsg.textContent = "MetaMask not detected. Please install it.";
+        showSpinner('connect');
+        
+        if (typeof window.ethereum === 'undefined') {
+          alert("Please install MetaMask to use this dApp!");
+          hideSpinner('connect');
           return;
         }
 
-        provider = new ethers.BrowserProvider(window.ethereum);
+        provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
-        const address = await signer.getAddress();
-        const balance = await provider.getBalance(address);
-        const eth = ethers.formatEther(balance);
+        signer = provider.getSigner();
+        walletAddress = await signer.getAddress();
+        contract = new ethers.Contract(contractAddress, abi, signer);
 
-        // Show info
-        addressSpan.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
-        balanceSpan.textContent = `${parseFloat(eth).toFixed(4)} ETH`;
-        walletInfo.style.display = "block";
+        decimals = await contract.decimals();
 
-        // Check network
-        const network = await provider.getNetwork();
-        if (network.chainId !== 1) { // Ethereum Mainnet
-          networkWarning.style.display = "block";
-        }
-
-      } catch (err) {
-        console.error(err);
-        errorMsg.textContent = "Connection failed. Please unlock MetaMask.";
+        // Update UI
+        document.getElementById("status").innerText = "✅ Connected";
+        document.getElementById("status").className = "status-connected";
+        document.getElementById("wallet").innerText = shortenAddress(walletAddress);
+        document.getElementById("connectButtonText").innerText = `✔️ ${shortenAddress(walletAddress)}`;
+        
+        // Load all data
+        await updateBalance();
+        await updateSupply();
+        await loadMintHistory();
+        await updateStakingInfo();
+        
+        // Setup referral system
+        setupReferralSystem();
+        
+        // Handle account changes
+        window.ethereum.on('accountsChanged', (accounts) => {
+          if (accounts.length === 0) {
+            // Disconnected
+            resetConnection();
+          } else {
+            // Account changed
+            connectWallet();
+          }
+        });
+        
+        // Handle chain changes
+        window.ethereum.on('chainChanged', () => {
+          window.location.reload();
+        });
+        
+      } catch (error) {
+        console.error("Connection error:", error);
+        alert("Connection failed: " + error.message);
+      } finally {
+        hideSpinner('connect');
       }
     }
 
-    async function signMessage() {
-      const signatureDisplay = document.getElementById("signature");
-      const message = "Sign this message to confirm you're human 🧠";
+    // Reset connection state
+    function resetConnection() {
+      document.getElementById("status").innerText = "❌ Not connected";
+      document.getElementById("status").className = "status-disconnected";
+      document.getElementById("wallet").innerText = "-";
+      document.getElementById("connectButtonText").innerText = "🔌 Connect Wallet";
+      document.getElementById("balance").innerText = "0 CJIB";
+      document.getElementById("supply").innerText = "0 CJIB";
+      document.getElementById("holders").innerText = "-";
+      document.getElementById("referralContainer").classList.add("hidden");
+      document.getElementById("referralInfo").classList.add("hidden");
+    }
 
+    // Update token balance
+    async function updateBalance() {
       try {
-        const signature = await signer.signMessage(message);
-        signatureDisplay.textContent = `✅ Signature: ${signature}`;
-      } catch (err) {
-        console.error(err);
-        signatureDisplay.textContent = "❌ Signature cancelled or failed.";
+        const balance = await contract.balanceOf(walletAddress);
+        document.getElementById("balance").innerText = `${ethers.utils.formatUnits(balance, decimals)} CJIB`;
+      } catch (error) {
+        console.error("Balance update error:", error);
+      }
+    }
+
+    // Update total supply
+    async function updateSupply() {
+      try {
+        const supply = await contract.totalSupply();
+        document.getElementById("supply").innerText = `${ethers.utils.formatUnits(supply, decimals)} CJIB`;
+      } catch (error) {
+        console.error("Supply update error:", error);
+      }
+    }
+
+    // Mint tokens
+    async function mint() {
+      try {
+        showSpinner('mint');
+        
+        const to = document.getElementById("mintTo").value.trim();
+        const amountRaw = document.getElementById("mintAmount").value.trim();
+        
+        if (!ethers.utils.isAddress(to)) {
+          alert("Please enter a valid recipient address");
+          return;
+        }
+        
+        if (!amountRaw || isNaN(amountRaw) || parseFloat(amountRaw) <= 0) {
+          alert("Please enter a valid amount");
+          return;
+        }
+        
+        const amount = ethers.utils.parseUnits(amountRaw, decimals);
+        const tx = await contract.mint(to, amount);
+        
+        document.getElementById("mintButtonText").innerText = "⏳ Processing...";
+        await tx.wait();
+        
+        alert("✅ Mint successful!");
+        updateBalance();
+        updateSupply();
+        loadMintHistory();
+        
+        // Reset form
+        document.getElementById("mintTo").value = "";
+        document.getElementById("mintAmount").value = "";
+      } catch (error) {
+        console.error("Mint error:", error);
+        alert("Mint failed: " + (error.message || error));
+      } finally {
+        hideSpinner('mint');
+        document.getElementById("mintButtonText").innerText = "🪙 Mint Tokens";
+      }
+    }
+
+    // Airdrop tokens
+    async function airdrop() {
+      try {
+        showSpinner('airdrop');
+        
+        const addressesText = document.getElementById("airdropAddresses").value.trim();
+        const amountRaw = document.getElementById("airdropAmount").value.trim();
+        
+        if (!addressesText) {
+          alert("Please enter recipient addresses");
+          return;
+        }
+        
+        if (!amountRaw || isNaN(amountRaw) || parseFloat(amountRaw) <= 0) {
+          alert("Please enter a valid amount");
+          return;
+        }
+        
+        const addresses = addressesText.split('\n')
+          .map(addr => addr.trim())
+          .filter(addr => addr.length > 0);
+        
+        // Validate addresses
+        for (const addr of addresses) {
+          if (!ethers.utils.isAddress(addr)) {
+            alert(`Invalid address: ${addr}`);
+            return;
+          }
+        }
+        
+        const amount = ethers.utils.parseUnits(amountRaw, decimals);
+        document.getElementById("airdropButtonText").innerText = "⏳ Processing...";
+        
+        const tx = await contract.airdrop(addresses, amount);
+        await tx.wait();
+        
+        alert(`✅ Airdrop successful to ${addresses.length} addresses!`);
+        updateBalance();
+        updateSupply();
+        loadMintHistory();
+        
+        // Reset form
+        document.getElementById("airdropAddresses").value = "";
+        document.getElementById("airdropAmount").value = "";
+      } catch (error) {
+        console.error("Airdrop error:", error);
+        alert("Airdrop failed: " + (error.message || error));
+      } finally {
+        hideSpinner('airdrop');
+        document.getElementById("airdropButtonText").innerText = "✈️ Execute Airdrop";
+      }
+    }
+
+    // Stake tokens
+    async function stake() {
+      try {
+        showSpinner('stake');
+        
+        const amountRaw = document.getElementById("stakeAmount").value.trim();
+        
+        if (!amountRaw || isNaN(amountRaw) || parseFloat(amountRaw) <= 0) {
+          alert("Please enter a valid amount");
+          return;
+        }
+        
+        const amount = ethers.utils.parseUnits(amountRaw, decimals);
+        document.getElementById("stakeButtonText").innerText = "⏳ Processing...";
+        
+        const tx = await contract.stake(amount);
+        await tx.wait();
+        
+        alert("✅ Tokens staked successfully!");
+        updateBalance();
+        updateStakingInfo();
+        
+        // Reset form
+        document.getElementById("stakeAmount").value = "";
+      } catch (error) {
+        console.error("Stake error:", error);
+        alert("Stake failed: " + (error.message || error));
+      } finally {
+        hideSpinner('stake');
+        document.getElementById("stakeButtonText").innerText = "🔒 Stake";
+      }
+    }
+
+    // Unstake tokens
+    async function unstake() {
+      try {
+        showSpinner('unstake');
+        
+        const amountRaw = document.getElementById("unstakeAmount").value.trim();
+        
+        if (!amountRaw || isNaN(amountRaw) || parseFloat(amountRaw) <= 0) {
+          alert("Please enter a valid amount");
+          return;
+        }
+        
+        const amount = ethers.utils.parseUnits(amountRaw, decimals);
+        document.getElementById("unstakeButtonText").innerText = "⏳ Processing...";
+        
+        const tx = await contract.unstake(amount);
+        await tx.wait();
+        
+        alert("✅ Tokens unstaked successfully!");
+        updateBalance();
+        updateStakingInfo();
+        
+        // Reset form
+        document.getElementById("unstakeAmount").value = "";
+      } catch (error) {
+        console.error("Unstake error:", error);
+        alert("Unstake failed: " + (error.message || error));
+      } finally {
+        hideSpinner('unstake');
+        document.getElementById("unstakeButtonText").innerText = "🔓 Unstake";
+      }
+    }
+
+    // Update staking info
+    async function updateStakingInfo() {
+      try {
+        if (!contract || !walletAddress) return;
+        
+        const stakedBalance = await contract.getStakedBalance(walletAddress);
+        document.getElementById("stakedBalance").innerText = `${ethers.utils.formatUnits(stakedBalance, decimals)} CJIB`;
+        
+        // Calculate estimated rewards (example: 15% APY)
+        if (stakedBalance.gt(0)) {
+          const dailyRewards = stakedBalance.mul(15).div(100).div(365);
+          const weeklyRewards = dailyRewards.mul(7);
+          
+          document.getElementById("dailyRewards").innerText = `${ethers.utils.formatUnits(dailyRewards, decimals)} CJIB`;
+          document.getElementById("weeklyRewards").innerText = `${ethers.utils.formatUnits(weeklyRewards, decimals)} CJIB`;
+        } else {
+          document.getElementById("dailyRewards").innerText = "0 CJIB";
+          document.getElementById("weeklyRewards").innerText = "0 CJIB";
+        }
+      } catch (error) {
+        console.error("Staking info error:", error);
+      }
+    }
+
+    // Load mint history
+    async function loadMintHistory() {
+      try {
+        const mintHistoryDiv = document.getElementById("mintHistory");
+        mintHistoryDiv.innerHTML = "<p class='small'>Loading transfer logs...</p>";
+
+        const filter = contract.filters.Transfer("0x0000000000000000000000000000000000000000", null);
+        const logs = await contract.queryFilter(filter, -5000); // last 5000 blocks
+
+        const uniqueHolders = new Set();
+
+        if (logs.length === 0) {
+          mintHistoryDiv.innerHTML = "<p class='small'>No mint history found.</p>";
+        } else {
+          mintHistoryDiv.innerHTML = "";
+          logs.reverse().forEach(log => {
+            const to = log.args.to;
+            const value = ethers.utils.formatUnits(log.args.value, decimals);
+            uniqueHolders.add(to);
+
+            mintHistoryDiv.innerHTML += `
+              <div class="mint-log">
+                <strong>${value} CJIB</strong> minted to <span class="address">${to}</span>
+                <div class="small">Block: ${log.blockNumber}</div>
+              </div>
+            `;
+          });
+          document.getElementById("holders").innerText = uniqueHolders.size;
+        }
+      } catch (error) {
+        console.error("Mint history error:", error);
+        mintHistoryDiv.innerHTML = `<p class='small'>Error loading history: ${error.message}</p>`;
+      }
+    }
+
+    // Export to CSV
+    async function exportToCSV() {
+      try {
+        const filter = contract.filters.Transfer("0x0000000000000000000000000000000000000000", null);
+        const logs = await contract.queryFilter(filter, -5000);
+        
+        if (logs.length === 0) {
+          alert("No mint history to export");
+          return;
+        }
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Recipient,Amount,Block\n";
+        
+        logs.reverse().forEach(log => {
+          const to = log.args.to;
+          const value = ethers.utils.formatUnits(log.args.value, decimals);
+          csvContent += `${to},${value},${log.blockNumber}\n`;
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "cryptoJib_mint_history.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error("CSV export error:", error);
+        alert("Export failed: " + error.message);
+      }
+    }
+
+    // Setup referral system
+    function setupReferralSystem() {
+      const referralContainer = document.getElementById("referralContainer");
+      const referralInfo = document.getElementById("referralInfo");
+      
+      // Generate referral link
+      const currentUrl = window.location.href.split('?')[0];
+      const referralLink = `${currentUrl}?ref=${walletAddress}`;
+      document.getElementById("referralLink").innerText = referralLink;
+      referralContainer.classList.remove("hidden");
+      
+      // Check if user came from a referral
+      const storedReferral = localStorage.getItem('referral');
+      if (storedReferral && storedReferral !== walletAddress) {
+        document.getElementById("referrerAddress").innerText = shortenAddress(storedReferral);
+        referralInfo.classList.remove("hidden");
+        
+        // Here you would typically call a contract function to register the referral
+        // Example: contract.registerReferral(storedReferral);
+      }
+    }
+
+    // Copy referral link
+    function copyReferralLink() {
+      const referralLink = document.getElementById("referralLink").innerText;
+      navigator.clipboard.writeText(referralLink).then(() => {
+        alert("Referral link copied to clipboard!");
+      }).catch(err => {
+        console.error("Copy failed:", err);
+        alert("Failed to copy link");
+      });
+    }
+
+    // Helper function to get URL parameter
+    function getUrlParameter(name) {
+      name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+      const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      const results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    // Helper function to shorten address
+    function shortenAddress(address) {
+      if (!address) return '';
+      return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+    }
+
+    // Helper function to show spinner
+    function showSpinner(type) {
+      document.getElementById(`${type}Spinner`).classList.remove("hidden");
+      document.getElementById(`${type}Button`).disabled = true;
+    }
+
+    // Helper function to hide spinner
+    function hideSpinner(type) {
+      document.getElementById(`${type}Spinner`).classList.add("hidden");
+      document.getElementById(`${type}Button`).disabled = false;
+    }
+
+    // Switch between tabs
+    function switchTab(tabName) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Deactivate all tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Activate selected tab
+      document.getElementById(tabName).classList.add('active');
+      
+      // Activate tab button
+      const tabs = document.querySelectorAll('.tab');
+      for (let i = 0; i < tabs.length; i++) {
+        if (tabs[i].textContent.toLowerCase().includes(tabName)) {
+          tabs[i].classList.add('active');
+          break;
+        }
+      }
+      
+      // Load data if needed
+      if (tabName === 'history') {
+        loadMintHistory();
+      } else if (tabName === 'staking') {
+        updateStakingInfo();
       }
     }
   </script>
-
 </body>
 </html>
