@@ -3,88 +3,157 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Connect Wallet</title>
+  <title>My Web3 Wallet DApp</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.umd.min.js"></script>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background: linear-gradient(to right, #1e3c72, #2a5298);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
       color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .wallet-card {
-      background: rgba(255, 255, 255, 0.05);
+      min-height: 100vh;
       padding: 2rem;
-      border-radius: 16px;
-      text-align: center;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
 
-    .wallet-btn {
-      padding: 0.75rem 2rem;
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .btn {
       background-color: #00b4d8;
-      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
       font-size: 1rem;
       font-weight: bold;
-      border: none;
+      color: white;
       border-radius: 12px;
       cursor: pointer;
       transition: background 0.3s;
     }
 
-    .wallet-btn:hover {
+    .btn:hover {
       background-color: #0077b6;
     }
 
-    .address {
+    .info {
       margin-top: 1rem;
       font-size: 0.9rem;
-      color: #b2fef7;
     }
 
     .error {
       color: #ff6b6b;
-      font-size: 0.85rem;
       margin-top: 1rem;
+    }
+
+    .success {
+      color: #4afcb1;
+    }
+
+    .network-warning {
+      background: #ffc107;
+      padding: 0.5rem;
+      border-radius: 8px;
+      color: #333;
+      margin-top: 1rem;
+    }
+
+    .signature {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      word-break: break-all;
+      color: #9be7ff;
     }
   </style>
 </head>
 <body>
 
-  <div class="wallet-card">
-    <button class="wallet-btn" onclick="connectWallet()">Connect Wallet 🔗</button>
-    <div id="walletAddress" class="address"></div>
+  <div class="card">
+    <h2>🔗 Connect to MetaMask</h2>
+    <button class="btn" onclick="connectWallet()">Connect Wallet</button>
+
+    <div id="networkWarning" class="network-warning" style="display:none;">
+      ⚠️ Please switch to Ethereum Mainnet
+    </div>
+
+    <div id="walletInfo" class="info" style="display:none;">
+      <p><strong>Address:</strong> <span id="walletAddress"></span></p>
+      <p><strong>ETH Balance:</strong> <span id="walletBalance"></span></p>
+      <button class="btn" onclick="signMessage()">Sign In</button>
+      <div id="signature" class="signature"></div>
+    </div>
+
     <div id="errorMsg" class="error"></div>
   </div>
 
   <script>
+    let provider, signer;
+
     async function connectWallet() {
-      const walletAddressElem = document.getElementById("walletAddress");
-      const errorMsgElem = document.getElementById("errorMsg");
-      walletAddressElem.textContent = "";
-      errorMsgElem.textContent = "";
+      const errorMsg = document.getElementById("errorMsg");
+      const walletInfo = document.getElementById("walletInfo");
+      const addressSpan = document.getElementById("walletAddress");
+      const balanceSpan = document.getElementById("walletBalance");
+      const networkWarning = document.getElementById("networkWarning");
+
+      errorMsg.textContent = "";
+      networkWarning.style.display = "none";
+      walletInfo.style.display = "none";
 
       try {
         if (!window.ethereum) {
-          errorMsgElem.textContent = "MetaMask is not installed or not detected.";
+          errorMsg.textContent = "MetaMask not detected. Please install it.";
           return;
         }
 
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const accounts = await provider.send("eth_requestAccounts", []);
-        const signer = await provider.getSigner();
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
         const address = await signer.getAddress();
+        const balance = await provider.getBalance(address);
+        const eth = ethers.formatEther(balance);
 
-        walletAddressElem.textContent = `Connected: ${address.slice(0, 6)}...${address.slice(-4)}`;
+        // Show info
+        addressSpan.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+        balanceSpan.textContent = `${parseFloat(eth).toFixed(4)} ETH`;
+        walletInfo.style.display = "block";
+
+        // Check network
+        const network = await provider.getNetwork();
+        if (network.chainId !== 1) { // Ethereum Mainnet
+          networkWarning.style.display = "block";
+        }
+
       } catch (err) {
         console.error(err);
-        errorMsgElem.textContent = "Failed to connect wallet. Please try again.";
+        errorMsg.textContent = "Connection failed. Please unlock MetaMask.";
+      }
+    }
+
+    async function signMessage() {
+      const signatureDisplay = document.getElementById("signature");
+      const message = "Sign this message to confirm you're human 🧠";
+
+      try {
+        const signature = await signer.signMessage(message);
+        signatureDisplay.textContent = `✅ Signature: ${signature}`;
+      } catch (err) {
+        console.error(err);
+        signatureDisplay.textContent = "❌ Signature cancelled or failed.";
       }
     }
   </script>
