@@ -998,11 +998,18 @@
       } else if (tabName === 'staking') {
         updateStakingInfo();
       }
-     window.addEventListener("DOMContentLoaded", () => {
-    // YOUR EXISTING JS HERE
-    // make sure connectWallet() is defined here or after ethers is loaded
-    document.getElementById("connectButton").addEventListener("click", connectWallet);
-  });
+    }
+    // Ensure Connect Button Works After Page Loads
+window.addEventListener("DOMContentLoaded", () => {
+  const connectButton = document.getElementById("connectButton");
+  if (connectButton) {
+    connectButton.addEventListener("click", connectWallet);
+    console.log("✅ Connect Button listener attached");
+  } else {
+    console.error("❌ Connect Button not found in the DOM.");
+  }
+});
+
   </script>
 </body>
 </html>
