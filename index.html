@@ -998,7 +998,11 @@
       } else if (tabName === 'staking') {
         updateStakingInfo();
       }
-    }
+     window.addEventListener("DOMContentLoaded", () => {
+    // YOUR EXISTING JS HERE
+    // make sure connectWallet() is defined here or after ethers is loaded
+    document.getElementById("connectButton").addEventListener("click", connectWallet);
+  });
   </script>
 </body>
 </html>
