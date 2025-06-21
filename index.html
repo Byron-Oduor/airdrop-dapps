@@ -547,6 +547,19 @@
 
     // Initialize on page load
     window.addEventListener('load', async () => {
+      // --- Start of added diagnostic ---
+      console.log("Window loaded. Checking ethers availability...");
+      if (typeof ethers === 'undefined') {
+        console.error("Ethers.js is not defined. Please ensure the ethers.js CDN is loaded correctly and accessible.");
+        displayMessageBox("Ethers.js library failed to load. Please check your internet connection or try again later.", "danger");
+        // Disable button to prevent further errors if ethers is not available
+        document.getElementById('connectButton').disabled = true; 
+        document.getElementById('connectButtonText').innerText = "🚫 Error";
+        return; // Exit the load function early
+      }
+      console.log("Ethers.js is defined. Proceeding with dApp initialization.");
+      // --- End of added diagnostic ---
+
       // Attach click listener for the connect button
       document.getElementById('connectButton').addEventListener('click', connectWallet);
 
@@ -579,6 +592,14 @@
           displayMessageBox("Please install MetaMask to use this dApp!", "warning");
           hideSpinner('connect');
           return;
+        }
+
+        // Ensure ethers is defined before using it (redundant check, but safe)
+        if (typeof ethers === 'undefined') {
+            console.error("Ethers.js is still not defined inside connectWallet. This is unexpected.");
+            displayMessageBox("A critical library is missing. Please refresh the page.", "danger");
+            hideSpinner('connect');
+            return;
         }
 
         provider = new ethers.providers.Web3Provider(window.ethereum);
