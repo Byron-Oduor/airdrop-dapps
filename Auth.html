@@ -369,7 +369,7 @@
     <header>
       <h1>🚀 CryptoJib Token Dashboard</h1>
       <div>
-        <button id="connectButton" onclick="connectWallet()">
+        <button id="connectButton">
           <span id="connectButtonText">🔌 Connect Wallet</span>
           <span id="connectSpinner" class="spinner hidden"></span>
         </button>
@@ -547,6 +547,9 @@
 
     // Initialize on page load
     window.addEventListener('load', async () => {
+      // Attach click listener for the connect button
+      document.getElementById('connectButton').addEventListener('click', connectWallet);
+
       // Check for referral code in URL
       if (referralCode && ethers.utils.isAddress(referralCode)) {
         localStorage.setItem('referral', referralCode);
@@ -572,7 +575,8 @@
         showSpinner('connect');
         
         if (typeof window.ethereum === 'undefined') {
-          alert("Please install MetaMask to use this dApp!");
+          // Changed alert to a message box for better UX in a dApp context
+          displayMessageBox("Please install MetaMask to use this dApp!", "warning");
           hideSpinner('connect');
           return;
         }
@@ -618,7 +622,7 @@
         
       } catch (error) {
         console.error("Connection error:", error);
-        alert("Connection failed: " + error.message);
+        displayMessageBox("Connection failed: " + error.message, "danger");
       } finally {
         hideSpinner('connect');
       }
@@ -666,12 +670,12 @@
         const amountRaw = document.getElementById("mintAmount").value.trim();
         
         if (!ethers.utils.isAddress(to)) {
-          alert("Please enter a valid recipient address");
+          displayMessageBox("Please enter a valid recipient address", "warning");
           return;
         }
         
         if (!amountRaw || isNaN(amountRaw) || parseFloat(amountRaw) <= 0) {
-          alert("Please enter a valid amount");
+          displayMessageBox("Please enter a valid amount", "warning");
           return;
         }
         
@@ -681,7 +685,7 @@
         document.getElementById("mintButtonText").innerText = "⏳ Processing...";
         await tx.wait();
         
-        alert("✅ Mint successful!");
+        displayMessageBox("✅ Mint successful!", "success");
         updateBalance();
         updateSupply();
         loadMintHistory();
@@ -691,7 +695,7 @@
         document.getElementById("mintAmount").value = "";
       } catch (error) {
         console.error("Mint error:", error);
-        alert("Mint failed: " + (error.message || error));
+        displayMessageBox("Mint failed: " + (error.message || error), "danger");
       } finally {
         hideSpinner('mint');
         document.getElementById("mintButtonText").innerText = "🪙 Mint Tokens";
@@ -707,12 +711,12 @@
         const amountRaw = document.getElementById("airdropAmount").value.trim();
         
         if (!addressesText) {
-          alert("Please enter recipient addresses");
+          displayMessageBox("Please enter recipient addresses", "warning");
           return;
         }
         
         if (!amountRaw || isNaN(amountRaw) || parseFloat(amountRaw) <= 0) {
-          alert("Please enter a valid amount");
+          displayMessageBox("Please enter a valid amount", "warning");
           return;
         }
         
@@ -723,7 +727,7 @@
         // Validate addresses
         for (const addr of addresses) {
           if (!ethers.utils.isAddress(addr)) {
-            alert(`Invalid address: ${addr}`);
+            displayMessageBox(`Invalid address: ${addr}`, "warning");
             return;
           }
         }
@@ -734,7 +738,7 @@
         const tx = await contract.airdrop(addresses, amount);
         await tx.wait();
         
-        alert(`✅ Airdrop successful to ${addresses.length} addresses!`);
+        displayMessageBox(`✅ Airdrop successful to ${addresses.length} addresses!`, "success");
         updateBalance();
         updateSupply();
         loadMintHistory();
@@ -744,7 +748,7 @@
         document.getElementById("airdropAmount").value = "";
       } catch (error) {
         console.error("Airdrop error:", error);
-        alert("Airdrop failed: " + (error.message || error));
+        displayMessageBox("Airdrop failed: " + (error.message || error), "danger");
       } finally {
         hideSpinner('airdrop');
         document.getElementById("airdropButtonText").innerText = "✈️ Execute Airdrop";
@@ -759,7 +763,7 @@
         const amountRaw = document.getElementById("stakeAmount").value.trim();
         
         if (!amountRaw || isNaN(amountRaw) || parseFloat(amountRaw) <= 0) {
-          alert("Please enter a valid amount");
+          displayMessageBox("Please enter a valid amount", "warning");
           return;
         }
         
@@ -769,7 +773,7 @@
         const tx = await contract.stake(amount);
         await tx.wait();
         
-        alert("✅ Tokens staked successfully!");
+        displayMessageBox("✅ Tokens staked successfully!", "success");
         updateBalance();
         updateStakingInfo();
         
@@ -777,7 +781,7 @@
         document.getElementById("stakeAmount").value = "";
       } catch (error) {
         console.error("Stake error:", error);
-        alert("Stake failed: " + (error.message || error));
+        displayMessageBox("Stake failed: " + (error.message || error), "danger");
       } finally {
         hideSpinner('stake');
         document.getElementById("stakeButtonText").innerText = "🔒 Stake";
@@ -792,7 +796,7 @@
         const amountRaw = document.getElementById("unstakeAmount").value.trim();
         
         if (!amountRaw || isNaN(amountRaw) || parseFloat(amountRaw) <= 0) {
-          alert("Please enter a valid amount");
+          displayMessageBox("Please enter a valid amount", "warning");
           return;
         }
         
@@ -802,7 +806,7 @@
         const tx = await contract.unstake(amount);
         await tx.wait();
         
-        alert("✅ Tokens unstaked successfully!");
+        displayMessageBox("✅ Tokens unstaked successfully!", "success");
         updateBalance();
         updateStakingInfo();
         
@@ -810,7 +814,7 @@
         document.getElementById("unstakeAmount").value = "";
       } catch (error) {
         console.error("Unstake error:", error);
-        alert("Unstake failed: " + (error.message || error));
+        displayMessageBox("Unstake failed: " + (error.message || error), "danger");
       } finally {
         hideSpinner('unstake');
         document.getElementById("unstakeButtonText").innerText = "🔓 Unstake";
@@ -827,11 +831,17 @@
         
         // Calculate estimated rewards (example: 15% APY)
         if (stakedBalance.gt(0)) {
-          const dailyRewards = stakedBalance.mul(15).div(100).div(365);
-          const weeklyRewards = dailyRewards.mul(7);
+          // Adjust calculation for more realistic daily/weekly rewards based on APY
+          // APY is 15%, so daily rate = (1 + 0.15)^(1/365) - 1
+          const annualRate = 0.15;
+          const dailyRate = Math.pow(1 + annualRate, 1/365) - 1;
+          const weeklyRate = Math.pow(1 + annualRate, 7/365) - 1;
+
+          const dailyRewardsRaw = stakedBalance.mul(ethers.utils.parseUnits(dailyRate.toFixed(18), 18)).div(ethers.BigNumber.from(10).pow(18));
+          const weeklyRewardsRaw = stakedBalance.mul(ethers.utils.parseUnits(weeklyRate.toFixed(18), 18)).div(ethers.BigNumber.from(10).pow(18));
           
-          document.getElementById("dailyRewards").innerText = `${ethers.utils.formatUnits(dailyRewards, decimals)} CJIB`;
-          document.getElementById("weeklyRewards").innerText = `${ethers.utils.formatUnits(weeklyRewards, decimals)} CJIB`;
+          document.getElementById("dailyRewards").innerText = `${ethers.utils.formatUnits(dailyRewardsRaw, decimals)} CJIB`;
+          document.getElementById("weeklyRewards").innerText = `${ethers.utils.formatUnits(weeklyRewardsRaw, decimals)} CJIB`;
         } else {
           document.getElementById("dailyRewards").innerText = "0 CJIB";
           document.getElementById("weeklyRewards").innerText = "0 CJIB";
@@ -847,8 +857,11 @@
         const mintHistoryDiv = document.getElementById("mintHistory");
         mintHistoryDiv.innerHTML = "<p class='small'>Loading transfer logs...</p>";
 
-        const filter = contract.filters.Transfer("0x0000000000000000000000000000000000000000", null);
-        const logs = await contract.queryFilter(filter, -5000); // last 5000 blocks
+        // Fetch logs using provider to ensure it works even if contract is not signer-initialized
+        const transferFilter = contract.filters.Transfer("0x0000000000000000000000000000000000000000", null);
+        // Use provider.getLogs directly for better performance for large historical data
+        // For demonstration, using contract.queryFilter (which uses getLogs internally)
+        const logs = await contract.queryFilter(transferFilter, 0); // Query from block 0 to current
 
         const uniqueHolders = new Set();
 
@@ -880,10 +893,10 @@
     async function exportToCSV() {
       try {
         const filter = contract.filters.Transfer("0x0000000000000000000000000000000000000000", null);
-        const logs = await contract.queryFilter(filter, -5000);
+        const logs = await contract.queryFilter(filter, 0); // Query from block 0
         
         if (logs.length === 0) {
-          alert("No mint history to export");
+          displayMessageBox("No mint history to export", "info");
           return;
         }
         
@@ -905,7 +918,7 @@
         document.body.removeChild(link);
       } catch (error) {
         console.error("CSV export error:", error);
-        alert("Export failed: " + error.message);
+        displayMessageBox("Export failed: " + error.message, "danger");
       }
     }
 
@@ -934,12 +947,20 @@
     // Copy referral link
     function copyReferralLink() {
       const referralLink = document.getElementById("referralLink").innerText;
-      navigator.clipboard.writeText(referralLink).then(() => {
-        alert("Referral link copied to clipboard!");
-      }).catch(err => {
-        console.error("Copy failed:", err);
-        alert("Failed to copy link");
-      });
+      // Using execCommand for broader compatibility within iframes
+      const tempInput = document.createElement('textarea');
+      tempInput.value = referralLink;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      try {
+          document.execCommand('copy');
+          displayMessageBox("Referral link copied to clipboard!", "success");
+      } catch (err) {
+          console.error("Copy failed:", err);
+          displayMessageBox("Failed to copy link. Please copy manually.", "danger");
+      } finally {
+          document.body.removeChild(tempInput);
+      }
     }
 
     // Helper function to get URL parameter
@@ -966,6 +987,58 @@
     function hideSpinner(type) {
       document.getElementById(`${type}Spinner`).classList.add("hidden");
       document.getElementById(`${type}Button`).disabled = false;
+    }
+
+    // Custom message box function instead of alert()
+    function displayMessageBox(message, type = "info") {
+        const messageBox = document.createElement('div');
+        messageBox.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        `;
+
+        let bgColor;
+        switch (type) {
+            case 'success':
+                bgColor = '#00b894';
+                break;
+            case 'warning':
+                bgColor = '#fdcb6e';
+                messageBox.style.color = '#2d3436'; // Dark text for warning
+                break;
+            case 'danger':
+                bgColor = '#d63031';
+                break;
+            default: // info
+                bgColor = '#6c5ce7';
+        }
+        messageBox.style.backgroundColor = bgColor;
+        messageBox.innerText = message;
+
+        document.body.appendChild(messageBox);
+
+        // Animate in
+        setTimeout(() => {
+            messageBox.style.opacity = '1';
+            messageBox.style.transform = 'translateX(-50%) translateY(0)';
+        }, 50);
+
+        // Animate out and remove after 3 seconds
+        setTimeout(() => {
+            messageBox.style.opacity = '0';
+            messageBox.style.transform = 'translateX(-50%) translateY(-20px)';
+            messageBox.addEventListener('transitionend', () => messageBox.remove());
+        }, 3000);
     }
 
     // Switch between tabs
@@ -999,17 +1072,6 @@
         updateStakingInfo();
       }
     }
-    // Ensure Connect Button Works After Page Loads
-window.addEventListener("DOMContentLoaded", () => {
-  const connectButton = document.getElementById("connectButton");
-  if (connectButton) {
-    connectButton.addEventListener("click", connectWallet);
-    console.log("✅ Connect Button listener attached");
-  } else {
-    console.error("❌ Connect Button not found in the DOM.");
-  }
-});
-
   </script>
 </body>
 </html>
