@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CryptoJib Token Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <!-- Changed Ethers.js CDN from jsdelivr to unpkg -->
+  <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -547,38 +548,30 @@
 
     // Initialize on page load
     window.addEventListener('load', async () => {
-      // --- Start of added diagnostic ---
-      console.log("Window loaded. Checking ethers availability...");
-      if (typeof ethers === 'undefined') {
-        console.error("Ethers.js is not defined. Please ensure the ethers.js CDN is loaded correctly and accessible.");
-        displayMessageBox("Ethers.js library failed to load. Please check your internet connection or try again later.", "danger");
-        // Disable button to prevent further errors if ethers is not available
-        document.getElementById('connectButton').disabled = true; 
-        document.getElementById('connectButtonText').innerText = "🚫 Error";
-        return; // Exit the load function early
-      }
-      console.log("Ethers.js is defined. Proceeding with dApp initialization.");
-      // --- End of added diagnostic ---
-
       // Attach click listener for the connect button
       document.getElementById('connectButton').addEventListener('click', connectWallet);
 
       // Check for referral code in URL
-      if (referralCode && ethers.utils.isAddress(referralCode)) {
+      if (referralCode && typeof ethers !== 'undefined' && ethers.utils.isAddress(referralCode)) {
         localStorage.setItem('referral', referralCode);
       }
       
-      // Check if MetaMask is installed
-      if (typeof window.ethereum !== 'undefined') {
+      // Check if MetaMask is installed and ethers is defined for auto-connection
+      if (typeof window.ethereum !== 'undefined' && typeof ethers !== 'undefined') {
         try {
-          // Try to connect automatically if already connected
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
             await connectWallet();
           }
         } catch (error) {
           console.error("Auto-connect failed:", error);
+          // Do not display message here, connectWallet will handle errors if initiated by user click
         }
+      } else if (typeof ethers === 'undefined') {
+          // If ethers is still not defined after load, display a message and disable connect button
+          displayMessageBox("Ethers.js library failed to load. Please check your internet connection or try again later.", "danger");
+          document.getElementById('connectButton').disabled = true;
+          document.getElementById('connectButtonText').innerText = "🚫 Error";
       }
     });
 
@@ -588,16 +581,15 @@
         showSpinner('connect');
         
         if (typeof window.ethereum === 'undefined') {
-          // Changed alert to a message box for better UX in a dApp context
           displayMessageBox("Please install MetaMask to use this dApp!", "warning");
           hideSpinner('connect');
           return;
         }
 
-        // Ensure ethers is defined before using it (redundant check, but safe)
+        // Ensure ethers is defined before using it
         if (typeof ethers === 'undefined') {
-            console.error("Ethers.js is still not defined inside connectWallet. This is unexpected.");
-            displayMessageBox("A critical library is missing. Please refresh the page.", "danger");
+            console.error("Ethers.js is not defined. Cannot proceed with wallet connection.");
+            displayMessageBox("A critical library is missing (Ethers.js). Please refresh the page.", "danger");
             hideSpinner('connect');
             return;
         }
@@ -690,7 +682,7 @@
         const to = document.getElementById("mintTo").value.trim();
         const amountRaw = document.getElementById("mintAmount").value.trim();
         
-        if (!ethers.utils.isAddress(to)) {
+        if (typeof ethers === 'undefined' || !ethers.utils.isAddress(to)) {
           displayMessageBox("Please enter a valid recipient address", "warning");
           return;
         }
@@ -747,7 +739,7 @@
         
         // Validate addresses
         for (const addr of addresses) {
-          if (!ethers.utils.isAddress(addr)) {
+          if (typeof ethers === 'undefined' || !ethers.utils.isAddress(addr)) {
             displayMessageBox(`Invalid address: ${addr}`, "warning");
             return;
           }
@@ -788,7 +780,7 @@
           return;
         }
         
-        const amount = ethers.utils.parseUnits(amountRaw, decimals);
+        const amount = typeof ethers !== 'undefined' ? ethers.utils.parseUnits(amountRaw, decimals) : 0;
         document.getElementById("stakeButtonText").innerText = "⏳ Processing...";
         
         const tx = await contract.stake(amount);
@@ -821,7 +813,7 @@
           return;
         }
         
-        const amount = ethers.utils.parseUnits(amountRaw, decimals);
+        const amount = typeof ethers !== 'undefined' ? ethers.utils.parseUnits(amountRaw, decimals) : 0;
         document.getElementById("unstakeButtonText").innerText = "⏳ Processing...";
         
         const tx = await contract.unstake(amount);
@@ -845,7 +837,7 @@
     // Update staking info
     async function updateStakingInfo() {
       try {
-        if (!contract || !walletAddress) return;
+        if (!contract || !walletAddress || typeof ethers === 'undefined') return;
         
         const stakedBalance = await contract.getStakedBalance(walletAddress);
         document.getElementById("stakedBalance").innerText = `${ethers.utils.formatUnits(stakedBalance, decimals)} CJIB`;
@@ -878,10 +870,13 @@
         const mintHistoryDiv = document.getElementById("mintHistory");
         mintHistoryDiv.innerHTML = "<p class='small'>Loading transfer logs...</p>";
 
-        // Fetch logs using provider to ensure it works even if contract is not signer-initialized
+        // Ensure contract is defined and ethers is available
+        if (!contract || typeof ethers === 'undefined') {
+            mintHistoryDiv.innerHTML = "<p class='small'>Cannot load history: Ethers.js not available or contract not initialized.</p>";
+            return;
+        }
+
         const transferFilter = contract.filters.Transfer("0x0000000000000000000000000000000000000000", null);
-        // Use provider.getLogs directly for better performance for large historical data
-        // For demonstration, using contract.queryFilter (which uses getLogs internally)
         const logs = await contract.queryFilter(transferFilter, 0); // Query from block 0 to current
 
         const uniqueHolders = new Set();
@@ -913,6 +908,12 @@
     // Export to CSV
     async function exportToCSV() {
       try {
+        // Ensure contract is defined and ethers is available
+        if (!contract || typeof ethers === 'undefined') {
+            displayMessageBox("Cannot export CSV: Ethers.js not available or contract not initialized.", "danger");
+            return;
+        }
+
         const filter = contract.filters.Transfer("0x0000000000000000000000000000000000000000", null);
         const logs = await contract.queryFilter(filter, 0); // Query from block 0
         
